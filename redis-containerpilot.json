@@ -1,0 +1,37 @@
+{
+    "consul": "localhost:8500",
+    "preStart": "/usr/local/bin/sentinel-healthcheck prestart",
+    "services": [
+		{
+		    "name": "{{.SERVICE_NAME}}",
+		    "port": 8080,
+		    "interfaces": ["eth0"],
+		    "health": "/usr/local/bin/sentinel-healthcheck healthCheck",
+		    "poll": 5,
+		    "ttl": 15,
+		    "tags": [
+				"{{.CONSUL_ENVIRONMENT}}"
+			]
+		}
+    ],
+    "coprocesses":[{
+    	"command": [
+			"consul", 
+    		"agent",
+            "-data-dir=/data",
+            "-config-dir=/config",
+            "-rejoin",
+            "-retry-join", "{{ .CONSUL_ADDRESS }}",
+            "-retry-max", "10",
+            "-retry-interval", "10s"
+        ],
+		"restarts": "unlimited"
+    },{
+    	"command": [
+			"redis-server", 
+    		"/etc/sentinel.conf",
+            "--sentinel"
+        ],
+		"restarts": "unlimited"
+    }]
+}
